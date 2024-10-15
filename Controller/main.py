@@ -1,5 +1,5 @@
 
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 
 
@@ -28,9 +28,15 @@ class wsManager:
 
 
 
+manager = wsManager()
+
 @app.websocket('/room')
 async def wsroom (room: WebSocket, clientName: str):
-    await room.accept()
-    while True:
-        data = await room.receive_text()
-        await room.send_text(data)
+    await manager.connect(room)
+
+    try:
+        while True:
+            message = await room.receive_text ()
+            await manager.broadcast(room, clientName, message)
+    except WebSocketDisconnect:
+        await manager.disconnect(room, clientName)
