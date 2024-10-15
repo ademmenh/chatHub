@@ -1,10 +1,9 @@
 
 from fastapi import WebSocket, WebSocketDisconnect
-from .interpreter import interpret
+
 
 
 class wsManager:
-
 
     def __init__ (self):
         self.Rooms : list[WebSocket] = []
@@ -41,8 +40,6 @@ class wsManager:
                 await self.send_alerts(vcRoom, message)
 
 
-    async def receive_message (self, room: WebSocket, clientName: str):
+    async def receive_message (self, room: WebSocket):
         message = await room.receive_text ()
-        command = await interpret (self, room, clientName, message)
-
-
+        return message
