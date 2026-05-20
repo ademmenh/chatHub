@@ -1,6 +1,5 @@
 import pytest
 import pytest_asyncio
-import os
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import create_async_engine
 from src.shared.infrastructure.metadata import metadata
@@ -8,8 +7,7 @@ from src.users.infrastructure.schema import users_table  # Ensure tables are reg
 from src.app import create_app
 from src.config.infrastructure.adapter import ConfigAdapter
 
-TEST_DB_FILE = "test_db.sqlite"
-TEST_DATABASE_URL = f"sqlite+aiosqlite:///{TEST_DB_FILE}"
+TEST_DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/test_waslini"
 
 class TestConfig(ConfigAdapter):
     @property
@@ -22,38 +20,26 @@ class TestConfig(ConfigAdapter):
 
 test_config = TestConfig()
 
-test_engine = create_async_engine(
-    test_config.async_database_url,
-    connect_args={"check_same_thread": False},
-)
+test_engine = create_async_engine(test_config.async_database_url)
 
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def create_test_tables():
-    # Ensure fresh DB
-    if os.path.exists(TEST_DB_FILE):
-        os.remove(TEST_DB_FILE)
-        
     async with test_engine.begin() as conn:
+        await conn.run_sync(metadata.drop_all)
         await conn.run_sync(metadata.create_all)
     yield
-    
+
     await test_engine.dispose()
-    if os.path.exists(TEST_DB_FILE):
-        os.remove(TEST_DB_FILE)
 
 
 @pytest_asyncio.fixture
 async def db_engine():
-    """Standalone engine for direct DB operations inside tests."""
     yield test_engine
 
 
 @pytest_asyncio.fixture
 async def client():
-    """
-    HTTP test client.
-    """
     app = create_app(config=test_config, show_docs=False)
 
     async with AsyncClient(

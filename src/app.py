@@ -67,8 +67,8 @@ def create_app(config: IConfig, show_docs: bool = False) -> FastAPI:
     api_prefix = f"/api/v{config.api_version}"
 
     app = FastAPI(
-        title="Restaurant API",
-        description="Restaurant management system API",
+        title="ChatHub API",
+        description="ChatHub management system API",
         version=config.api_version,
         lifespan=lifespan,
         docs_url=f"{api_prefix}/docs" if show_docs else None,
@@ -81,9 +81,9 @@ def create_app(config: IConfig, show_docs: bool = False) -> FastAPI:
     # ── Custom OpenAPI ────────────────────────────────────────────────────────────
     def openapi() -> dict:
         schema = get_openapi(
-            title="Restaurant API",
+            title="ChatHub API",
             version=config.api_version,
-            description="Restaurant management system API",
+            description="ChatHub management system API",
             routes=app.routes,
         )
         return custom_openapi(schema)
